@@ -1,0 +1,197 @@
+data:
+  AzureWebJobsStorage: GGVmYXVsdEVuZHBvaW50c1Byb3RvY29sPWh0dHBzO0FjY291bnROYW1lPWVhc3Rhc2lhcmVzb3VyY2Vncm9hNGFmO0FjY291bnRLZXk9VncvbGxaNTU5QjFHYWVOL2dObUFwdXBBcEV6SmZpMHQ1VHZkaS9vV2plUmpsRFJTa3JPM0g0Qk9VSmlxSGxZeWVuakcvK2NTcE51QmNwM0xqbmY3blE9PTtFbmRwb2ludFN1ZmZpeD1jb3JlLndpbmRvd3MubmV0
+  FUNCTIONS_WORKER_RUNTIME: cHl0aG9u
+  MyDbConnection: bW9uZ29kYjovL3RoYW5oaGFpMTI5OWNvc21vc2RiOlFSc3h1V2hzbDljZDdZWUMyOVk3MzJ1TmNYTDRsQWNXR3RGVGsyZWx6ejlXWHJVMFdMSFEzNE4xaldpbkVrZUYyUjdoUXVhYVM2eGZyTGh6YlBwSERBPT1AdGhhbmhoYWkxMjk5Y29zbW9zZGIubW9uZ28uY29zbW9zLmF6dXJlLmNvbToxMDI1NS8/c3NsPXRydWUmcmV0cnl3cml0ZXM9ZmFsc2UmcmVwbGljYVNldD1nbG9iYWxkYiZtYXhJZGxlVGltZU1TPTEyMDAwMCZhcHBOYW1lPUB0aGFuaGhhaTEyOTljb3Ntb3NkYkA=
+apiVersion: v1
+kind: Secret
+metadata:
+  name: neighborlyfunctionapp
+---
+data:
+  host.master: SmF4eEJFNVJwNHdOWDRNeEJoVGlZejlGRFllc2lRUVVxQ013MnN5MTdoVzg3T0pPdlQwQVV3PT0=
+  host.function.default: Z0dOMno3NDU3Tm5oUlh0Z2xkb0dwYm5OYnAxekNiNWJLZHNKQUdkTlh2L2I5dVRlZXI3b0RRPT0=
+  host.systemKey.default: YWIzd2RpY2p0dUQ4cFV2Q092RXhDeEtLUHZjTEgwMmE1OE5nZ1hndmsxeUJ6YXZKUi8ycGxRPT0=
+  functions.createadvertisement.default: SlRDRngvWk15Y1Y5NFovOVZPOXdhY3piSGxaZVBYSXpZMjFGeWJqR0IybE1BRnJhMzc5bUtRPT0=
+  functions.deleteadvertisement.default: TnJCZS9hRFNPZUsxSmlJM2FXVUttbXFUY0tOeWFQRG5zNkNPRFRuQ3owbFowVmN1bzM2SjhBPT0=
+  functions.getadvertisement.default: YVg0dW14NDZPRVBIZk02ekV5YXFsWVNocG1ka2NGR2llRmF6NkpveDcvWFZzdHIvd3lLT2RnPT0=
+  functions.getadvertisements.default: SmM1UnhsN0FmcjlWZEUzckYyMWZ1V0VZUnRCN0t1RUpteno0d0IvVmZ1TzY5RDZScEJWbzVnPT0=
+  functions.getpost.default: WDFPMkt0V1RERUlVamRzZ1pLaTUyNFN5Y2FHaWFOTTh0dXBpWE1aL05mSzVvOXFIejRUNWJRPT0=
+  functions.getposts.default: QndiQ0tBbVdra1JuMlFDTVkvQ0FrbkFQVzVTWHN3UG4wNjdIUkV2VHJmVk1udFljTjNHQWFBPT0=
+  functions.updateadvertisement.default: c25HTmdFa05LRW85RUVFZnFUWHBsdWF0cklXQXJ1NE1DZ1AzYUlaaXZ3Y05heUl4YjFKa09nPT0=
+apiVersion: v1
+kind: Secret
+metadata:
+  name: func-keys-kube-secret-neighborlyfunctionapp
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: neighborlyfunctionapp-function-keys-identity-svc-act
+---
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - secrets
+  - configMaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: functions-keys-manager-role
+---
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: functions-keys-manager-role
+subjects:
+- kind: ServiceAccount
+  name: neighborlyfunctionapp-function-keys-identity-svc-act
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: neighborlyfunctionapp-function-keys-identity-svc-act-functions-keys-manager-rolebinding
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: neighborlyfunctionapp-http
+spec:
+  selector:
+    app: neighborlyfunctionapp-http
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: neighborlyfunctionapp-http
+  labels:
+    app: neighborlyfunctionapp-http
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: neighborlyfunctionapp-http
+  template:
+    metadata:
+      labels:
+        app: neighborlyfunctionapp-http
+    spec:
+      containers:
+      - name: neighborlyfunctionapp-http
+        image: neighborlyimage:v1
+        ports:
+        - containerPort: 80
+        env:
+        - name: AzureFunctionsJobHost__functions__0
+          value: createAdvertisement
+        - name: AzureFunctionsJobHost__functions__1
+          value: deleteAdvertisement
+        - name: AzureFunctionsJobHost__functions__2
+          value: getAdvertisement
+        - name: AzureFunctionsJobHost__functions__3
+          value: getAdvertisements
+        - name: AzureFunctionsJobHost__functions__4
+          value: getPost
+        - name: AzureFunctionsJobHost__functions__5
+          value: getPosts
+        - name: AzureFunctionsJobHost__functions__6
+          value: updateAdvertisement
+        - name: AzureWebJobsSecretStorageType
+          value: kubernetes
+        - name: AzureWebJobsKubernetesSecretName
+          value: secrets/func-keys-kube-secret-neighborlyfunctionapp
+        envFrom:
+        - secretRef:
+            name: neighborlyfunctionapp
+        readinessProbe:
+          failureThreshold: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 240
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+        startupProbe:
+          failureThreshold: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 240
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+      serviceAccountName: neighborlyfunctionapp-function-keys-identity-svc-act
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: neighborlyfunctionapp
+  labels:
+    app: neighborlyfunctionapp
+spec:
+  selector:
+    matchLabels:
+      app: neighborlyfunctionapp
+  template:
+    metadata:
+      labels:
+        app: neighborlyfunctionapp
+    spec:
+      containers:
+      - name: neighborlyfunctionapp
+        image: neighborlyimage:v1
+        env:
+        - name: AzureFunctionsJobHost__functions__0
+          value: eventHubTrigger
+        envFrom:
+        - secretRef:
+            name: neighborlyfunctionapp
+        readinessProbe:
+          failureThreshold: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 240
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+        startupProbe:
+          failureThreshold: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 240
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+      serviceAccountName: neighborlyfunctionapp-function-keys-identity-svc-act
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: neighborlyfunctionapp
+  labels: {}
+spec:
+  scaleTargetRef:
+    name: neighborlyfunctionapp
+  triggers:
+  - type: eventgridtrigger
+    metadata:
+      direction: in
+      eventHubName: testhub
+      connection: Endpoint=sb://udacityneighborly.servicebus.windows.net/;SharedAccessKeyName=allpolicy;SharedAccessKey=LOxUOkN13xN038T1VoSsmaTt4s7vq/+VCzduS5/nH9A=;EntityPath=testhub
+---
+
